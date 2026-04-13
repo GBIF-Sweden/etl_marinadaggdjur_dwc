@@ -236,3 +236,42 @@ def generate_occ_id_triplet(df):
         cols.insert(0, cols.pop(cols.index("occurrenceID")))
         df = df[cols]
     return df
+
+
+def format_time(row):
+    """
+    Formats a timedelta or time-like value into HH:MM:SS.
+
+    Args:
+        row (pd.Series): A row from the DataFrame.
+
+    Returns:
+        str or None: Formatted time string or None.
+    """
+    if pd.isna(row):
+        return None
+
+    try:
+        return str(row)
+    except Exception:
+        return None
+
+
+@register_transformation
+def format_eventTime(df):
+    """
+    Formats eventTime values in the DataFrame.
+
+    Args:
+        df (pd.DataFrame): Input DataFrame.
+
+    Returns:
+        pd.DataFrame: DataFrame with formatted eventTime.
+    """
+    if "eventTime" not in df.columns:
+        logging.warning("eventTime column not found in DataFrame.")
+        return df
+
+    df["eventTime"] = df["eventTime"].apply(format_time)
+    logging.info("eventTime formatting completed successfully.")
+    return df
