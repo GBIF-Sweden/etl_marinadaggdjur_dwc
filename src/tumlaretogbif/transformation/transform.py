@@ -137,3 +137,44 @@ def add_vitality(df):
     )
     logging.info("DwC term vitality added to dataframe successfully.")
     return df
+
+
+def create_dynamic_properties(row, columns):
+    """
+    Creates a dictionary of dynamic properties from non-null and non-empty values in specified columns.
+
+    Parameters:
+    row (pd.Series): A row from the DataFrame.
+    columns (list of str): List of column names to include as dynamic properties.
+
+    Returns:
+    """
+    properties = {
+        column: row[column]
+        for column in columns
+        if column in row and pd.notna(row[column]) and row[column] != ""
+    }
+    return properties if properties else None
+
+
+@register_transformation
+def add_dynamicProperties(df, config):
+    """
+    Adds a 'dynamicProperties' column to the DataFrame based on configuration-specified columns.
+
+    Parameters:
+    df (pd.DataFrame): The DataFrame to transform.
+    config (dict): Configuration dictionary.
+
+    Returns:
+    pd.DataFrame: DataFrame with dynamicProperties column.
+    """
+    columns = config.get("columns_to_dynamicproperties", [])
+    df["dynamicProperties"] = df.apply(
+        lambda row: json.dumps(create_dynamic_properties(row, columns), ensure_ascii=False)
+        if create_dynamic_properties(row, columns)
+        else None,
+        axis=1,
+    )
+    logging.info("dynamicProperties column added to dataframe successfully.")
+    return df
