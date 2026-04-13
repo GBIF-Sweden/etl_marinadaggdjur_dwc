@@ -38,3 +38,31 @@ def validate_transformation_requirements(df, func_name, config):
         raise ValueError(
             f"Transformation {func_name} requires missing columns: {', '.join(missing_columns)}"
         )
+
+
+@register_transformation
+def clean_whitespace(df):
+    """
+    Clean unwanted whitespaces, tabs, and carriage returns from all string columns in the DataFrame.
+
+    Args:
+        df (pd.DataFrame): Input DataFrame.
+
+    Returns:
+        pd.DataFrame: Cleaned DataFrame.
+    """
+    try:
+        # Apply whitespace cleaning to each column
+        df_cleaned = df.map(
+            lambda x: (
+                " ".join(str(x).split()).replace("\t", "").replace("\r", "")
+                if isinstance(x, str)
+                else x
+            )
+        )
+        logging.info("Whitespace cleaning transformation completed successfully.")
+        return df_cleaned
+
+    except Exception as e:
+        logging.exception(f"An error occurred during clean_whitespace: {e}")
+        raise
