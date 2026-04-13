@@ -5,26 +5,28 @@ from pathlib import Path
 
 class ContextFilter(logging.Filter):
     def filter(self, record):
-        record.run_id = os.getenv("RUN_ID", "unknown")
-        record.config_name = os.getenv("CONFIG_NAME", "unknown")
+        record.run_id = getattr(record, "run_id", os.getenv("RUN_ID", "unknown"))
+        record.config_name = getattr(record, "config_name", os.getenv("CONFIG_NAME", "unknown"))
         return True
 
 
 def configure_logging():
     log_level = os.getenv("LOG_LEVEL", "INFO").upper()
+    handlers = [logging.StreamHandler()]
+    context_filter = ContextFilter()
+
     log_file = os.getenv("LOG_FILE")
-
-    formatter = logging.Formatter(
-        "%(asctime)s - %(levelname)s - %(run_id)s - %(config_name)s - %(message)s"
-    )
-    handler = logging.StreamHandler()
-    handler.setFormatter(formatter)
-
     if log_file:
-        Path(log_file).parent.mkdir(parents=True, exist_ok=True)
-        file_handler = logging.FileHandler(log_file)
-        file_handler.setFormatter(formatter)
-        logging.getLogger().addHandler(file_handler)
+        log_path = Path(log_file)
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        handlers.append(logging.FileHandler(log_path))
 
-    logging.basicConfig(level=log_level, handlers=[handler])
-    logging.getLogger().addFilter(ContextFilter())
+    for handler in handlers:
+        handler.addFilter(context_filter)
+
+    logging.basicConfig(
+        level=log_level,
+        format='%(asctime)s - %(levelname)s - run_id=%(run_id)s - config=%(config_name)s - %(message)s',
+        handlers=handlers,
+        force=True,
+    )
