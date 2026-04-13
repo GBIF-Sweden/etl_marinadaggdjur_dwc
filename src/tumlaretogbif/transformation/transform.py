@@ -315,3 +315,23 @@ def convert_column_to_int(df, column_name):
     df[column_name] = pd.to_numeric(df[column_name], errors="coerce").fillna(0).astype(int)
     logging.info("%s converted to int successfully.", column_name)
     return df
+
+
+@register_transformation
+def vernacular_to_scientificName(df, lookup_table):
+    """
+    Maps vernacular names to scientific names using a lookup table.
+
+    Args:
+        df (pd.DataFrame): Input DataFrame.
+        lookup_table (dict): Mapping from vernacular to scientific names.
+
+    Returns:
+        pd.DataFrame: DataFrame with scientificName column.
+    """
+    if "vernacularName" not in df.columns:
+        raise ValueError("vernacularName column not found in DataFrame.")
+
+    df["scientificName"] = df["vernacularName"].map(lookup_table).fillna(df.get("scientificName", pd.NA))
+    logging.info("Mapped vernacular names to scientific names successfully.")
+    return df
