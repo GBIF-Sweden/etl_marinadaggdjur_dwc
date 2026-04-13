@@ -1,0 +1,10 @@
+services:
+  etl:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .secrets/local.env
+    volumes:
+      - ./data:/app/data
+    command: ["python", "-m", "tumlaretogbif.main", "etl_configs/tumlare.yml"]
