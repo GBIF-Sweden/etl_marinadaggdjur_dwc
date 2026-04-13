@@ -295,3 +295,23 @@ def add_individualcount(df):
         df["individualCount"] = df["individualCount"].fillna(1).astype(int)
         logging.info("individualCount normalized successfully.")
     return df
+
+
+@register_transformation
+def convert_column_to_int(df, column_name):
+    """
+    Converts a specified DataFrame column to integer type.
+
+    Args:
+        df (pd.DataFrame): Input DataFrame.
+        column_name (str): Column to convert.
+
+    Returns:
+        pd.DataFrame: DataFrame with converted column.
+    """
+    if column_name not in df.columns:
+        raise ValueError(f"Column '{column_name}' not found in DataFrame.")
+
+    df[column_name] = pd.to_numeric(df[column_name], errors="coerce").fillna(0).astype(int)
+    logging.info("%s converted to int successfully.", column_name)
+    return df
