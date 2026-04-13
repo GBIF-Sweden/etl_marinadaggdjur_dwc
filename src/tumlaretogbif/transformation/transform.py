@@ -117,3 +117,23 @@ def drop_unmapped_columns(df, config):
     except Exception as e:
         logging.exception("An error occurred while dropping unmapped columns: %s", e)
         raise
+
+
+@register_transformation
+def add_vitality(df):
+    """
+    Adds a 'vitality' column to the DataFrame based on 'animal_condition' values.
+
+    Parameters:
+    df (pd.DataFrame): The DataFrame containing an 'animal_condition' column.
+
+    Returns:
+    pd.DataFrame: Modified DataFrame with an additional 'vitality' column.
+    """
+    # Map 'animal_condition' values to 'vitality' status: 'alive' for 'living', 'dead' for 'dead',
+    # and None for any other condition.
+    df['vitality'] = df['animal_condition'].apply(
+        lambda x: 'alive' if x == 'living' else ('dead' if x == 'dead' else None)
+    )
+    logging.info("DwC term vitality added to dataframe successfully.")
+    return df
