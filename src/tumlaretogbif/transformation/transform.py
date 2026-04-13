@@ -335,3 +335,37 @@ def vernacular_to_scientificName(df, lookup_table):
     df["scientificName"] = df["vernacularName"].map(lookup_table).fillna(df.get("scientificName", pd.NA))
     logging.info("Mapped vernacular names to scientific names successfully.")
     return df
+
+
+def apply_transformations(df, transformations, config=None):
+    """
+    Applies a sequence of registered transformations to the DataFrame.
+
+    Args:
+        df (pd.DataFrame): Input DataFrame.
+        transformations (list of dict): List of transformation definitions.
+        config (dict, optional): Configuration dictionary.
+
+    Returns:
+        pd.DataFrame: Transformed DataFrame.
+    """
+    for transformation in transformations:
+        func_name = transformation.get("name")
+        params = transformation.get("params", {})
+
+        if func_name not in TRANSFORMATION_REGISTRY:
+            raise ValueError(f"Transformation '{func_name}' is not registered.")
+
+        validate_transformation_requirements(df, func_name, config or {})
+        transform_func = TRANSFORMATION_REGISTRY[func_name]
+
+        if config is not None and func_name in CONFIG_AWARE_TRANSFORMATIONS:
+            df = transform_func(df, config)
+        elif params:
+            df = transform_func(df, **params)
+        else:
+            df = transform_func(df)
+
+        logging.info("Transformation '%s' applied successfully.", func_name)
+
+    return df
