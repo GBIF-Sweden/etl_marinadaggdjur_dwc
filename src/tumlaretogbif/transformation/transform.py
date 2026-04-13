@@ -275,3 +275,23 @@ def format_eventTime(df):
     df["eventTime"] = df["eventTime"].apply(format_time)
     logging.info("eventTime formatting completed successfully.")
     return df
+
+
+@register_transformation
+def add_individualcount(df):
+    """
+    Adds or preserves individualCount in the DataFrame.
+
+    Args:
+        df (pd.DataFrame): Input DataFrame.
+
+    Returns:
+        pd.DataFrame: DataFrame with individualCount present.
+    """
+    if "individualCount" not in df.columns:
+        df["individualCount"] = 1
+        logging.info("individualCount added with default value 1.")
+    else:
+        df["individualCount"] = df["individualCount"].fillna(1).astype(int)
+        logging.info("individualCount normalized successfully.")
+    return df
