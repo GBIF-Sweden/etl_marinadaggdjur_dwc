@@ -178,3 +178,31 @@ def add_dynamicProperties(df, config):
     )
     logging.info("dynamicProperties column added to dataframe successfully.")
     return df
+
+
+@register_transformation
+def addprefix_associatedmedia(df, url):
+    """
+    Adds a URL prefix to the associatedMedia values.
+
+    Args:
+        df (pd.DataFrame): Input DataFrame.
+        url (str): Prefix URL to prepend.
+
+    Returns:
+        pd.DataFrame: DataFrame with prefixed associatedMedia values.
+    """
+    if "associatedMedia" not in df.columns:
+        logging.warning("associatedMedia column not found in DataFrame.")
+        return df
+
+    def prefix_media(value):
+        if pd.isna(value) or value == "":
+            return value
+        return " | ".join(
+            [f"{url}{item.strip()}" for item in str(value).split(",") if item.strip()]
+        )
+
+    df["associatedMedia"] = df["associatedMedia"].apply(prefix_media)
+    logging.info("associatedMedia URL prefix added successfully.")
+    return df
