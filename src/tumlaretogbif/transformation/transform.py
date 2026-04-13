@@ -66,3 +66,54 @@ def clean_whitespace(df):
     except Exception as e:
         logging.exception(f"An error occurred during clean_whitespace: {e}")
         raise
+
+
+@register_transformation
+def drop_columns(df, columns_to_drop):
+    """
+    Drops specified columns from the DataFrame if they exist.
+
+    Args:
+        df (pd.DataFrame): Input DataFrame.
+        columns_to_drop (str or list): Column name or list of column names to drop.
+
+    Returns:
+        pd.DataFrame: DataFrame after dropping specified columns.
+    """
+    try:
+        # Convert single column name (string) to a list
+        if isinstance(columns_to_drop, str):
+            columns_to_drop = [columns_to_drop]
+
+        # Only drop columns that exist in the DataFrame
+        columns_to_drop = [col for col in columns_to_drop if col in df.columns]
+        df.drop(columns=columns_to_drop, inplace=True)
+        return df
+    except KeyError as e:
+        logging.error(f"Error: One or more unmapped columns not found in DataFrame: {e}")
+        raise
+    except Exception as e:
+        logging.exception(f"An unexpected error occurred in drop_unmapped_columns: {e}")
+        raise
+
+
+@register_transformation
+def drop_unmapped_columns(df, config):
+    """
+    Drop specified columns from the DataFrame based on the configuration.
+
+    Args:
+        df (pd.DataFrame): Input DataFrame.
+        config (dict): Configuration dictionary.
+
+    Returns:
+        pd.DataFrame: DataFrame after dropping specified columns.
+    """
+    unmapped_columns = config.get('unmapped', [])
+    try:
+        drop_columns(df, unmapped_columns)
+        logging.info("drop_unmapped_columns transformation completed successfully.")
+        return df
+    except Exception as e:
+        logging.exception("An error occurred while dropping unmapped columns: %s", e)
+        raise
