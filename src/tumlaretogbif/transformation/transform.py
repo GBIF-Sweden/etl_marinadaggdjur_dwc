@@ -206,3 +206,33 @@ def addprefix_associatedmedia(df, url):
     df["associatedMedia"] = df["associatedMedia"].apply(prefix_media)
     logging.info("associatedMedia URL prefix added successfully.")
     return df
+
+
+@register_transformation
+def generate_occ_id_triplet(df):
+    """
+    Generates an occurrenceID based on institutionCode, collectionCode, and catalogNumber.
+
+    Args:
+        df (pd.DataFrame): Input DataFrame.
+
+    Returns:
+        pd.DataFrame: DataFrame with occurrenceID column.
+    """
+    if not {"institutionCode", "collectionCode", "catalogNumber"}.issubset(df.columns):
+        raise ValueError(
+            "Missing required columns for generate_occ_id_triplet: institutionCode, collectionCode, catalogNumber"
+        )
+
+    df["occurrenceID"] = (
+        df["institutionCode"].astype(str)
+        + ":"
+        + df["collectionCode"].astype(str)
+        + ":"
+        + df["catalogNumber"].astype(str)
+    )
+    cols = list(df.columns)
+    if "occurrenceID" in cols:
+        cols.insert(0, cols.pop(cols.index("occurrenceID")))
+        df = df[cols]
+    return df
