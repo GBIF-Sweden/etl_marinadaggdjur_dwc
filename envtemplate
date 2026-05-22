@@ -1,0 +1,6 @@
+SOURCE_DB_USER=replace-me
+SOURCE_DB_PASSWORD=replace-me
+TARGET_DB_USER=replace-me
+TARGET_DB_PASSWORD=replace-me
+LOG_LEVEL=INFO
+LOG_FILE=

@@ -1,0 +1,102 @@
+extract:
+  database_hostname: 193.10.57.103
+  database_name: tumlaredb
+  database_port: "3306"
+  charset: utf8mb3
+  batch_size: 100
+  sql_file: tumlare_observations.sql
+
+dtype_dict:
+  observation_date: datetime64[ns]
+  time_start: timedelta64[ns]
+  time_end: timedelta64[ns]
+  distance_min: Int64
+  distance_max: Int64
+  quantity_min: Int64
+  quantity_max: Int64
+  quantity_cubs_min: Int64
+  quantity_cubs_max: Int64
+  quantity_dead: Int64
+  observer_comment: str
+
+mapping:
+  id: catalogNumber
+  observation_date: eventDate
+  time_start: eventTime
+  latitude: decimalLatitude
+  longitude: decimalLongitude
+  observer_comment: occurrenceRemarks
+  updated_at: modified
+  name: county
+  vitality: vitality
+  Kingdom: kingdom
+  "Scientific name": scientificName
+
+defaults:
+  institutionCode: NRM
+  collectionCode: Porpoises
+  basisOfRecord: HumanObservation
+  kingdom: Animalia
+  scientificName: "Phocoena phocoena (Linnaeus, 1758)"
+  country: Sweden
+  informationWithheld: "Observer's information withheld"
+
+columns_to_dynamicproperties:
+  - distance_min
+  - distance_max
+  - quantity_min
+  - quantity_max
+  - quantity_cubs_min
+  - quantity_cubs_max
+  - quantity_dead
+  - dead_length_min
+  - dead_length_max
+
+unmapped:
+  - animal_condition
+  - time_end
+  - distance_min
+  - distance_max
+  - quantity_min
+  - quantity_max
+  - quantity_cubs_min
+  - quantity_cubs_max
+  - quantity_dead
+  - dead_length_min
+  - dead_length_max
+  - animal_decomposion
+
+transformations:
+  - function: clean_whitespace
+    params: {}
+  - function: addprefix_associatedmedia
+    params:
+      url: https://marinadaggdjur.nrm.se/images/
+  - function: generate_occ_id_triplet
+    params: {}
+  - function: add_vitality
+    params: {}
+  - function: add_dynamicProperties
+    params: {}
+  - function: format_eventTime
+    params: {}
+  - function: add_individualcount
+    params: {}
+  - function: convert_column_to_int
+    params:
+      columnname: individualCount
+  - function: drop_unmapped_columns
+    params: {}
+
+load:
+  database_hostname: localhost
+  database_name: nrm_na_maf
+  database_port: "3306"
+  database_table: simpledwc_tumlare
+  database_table_pk_column: occurrenceID
+  targetFilePath: data/output_tumlare.csv
+  delimiter: "\t"
+  encoding: utf8
+  write_to_file: true
+  write_to_db: true
+

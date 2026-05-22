@@ -1,35 +1,56 @@
 # etl_marinadaggdjur_dwc
 
-This repository is a phased migration of the `tumlaretogbif_src` ETL codebase into a new versioned repository.
+Configuration-driven ETL tool for processing marine mammal observation data (e.g., harbor porpoise/tumlare, seals) into Darwin Core format for GBIF.
 
 ## Overview
 
-The migration is being performed incrementally in phases:
+This repository provides a framework for extracting data from source databases, transforming it according to configured rules, and loading it into a target database. It currently supports pipelines for:
 
-1. Repository base and test infrastructure
-2. Core ETL engine and the `tumlare` pipeline
-3. Second pipeline (`seal`)
-4. Miscellaneous tooling and validation
-5. Migration review
+- **Tumlare (Harbor Porpoise):** Swedish harbor porpoise observation data.
+- **Seal:** Swedish seal observation data.
 
 ## Setup
 
-Use a Python 3.12 environment and install base dependencies with:
+Use a Python 3.12+ environment and install dependencies:
 
 ```bash
 python -m pip install -r requirements.txt
+python -m pip install -e .
+```
+
+To install development dependencies:
+
+```bash
+python -m pip install -r requirements-dev.txt
 ```
 
 ## Running the ETL
 
-The ETL runner will be added in later phases. At that point, the typical execution will be:
+The ETL is driven by YAML configuration files found in `etl_configs/`.
 
 ```bash
-python -m etl_marinadaggdjur_dwc.main etl_configs/tumlare.yml
+python -m tumlaretogbif.main etl_configs/tumlare.yml --env-file .env
 ```
 
-## Notes
+### Arguments
 
-- This repository is built from the `tumlaretogbif_src` source code.
-- The source folder is treated as READ-ONLY during migration.
-- Ansible files and symlinked data/log directories are excluded from migration.
+- `config_path`: Path to the ETL configuration YAML (e.g., `etl_configs/tumlare.yml`).
+- `--env-file`: Optional path to a `.env` file containing database credentials (`SOURCE_DB_*` and `TARGET_DB_*`).
+- `--source-db-credentials-path`: Optional path to a JSON file with source database credentials.
+- `--target-db-credentials-path`: Optional path to a JSON file with target database credentials.
+
+## Validation
+
+A script is provided to validate the configuration files:
+
+```bash
+python scripts/validate_configs.py
+```
+
+## Testing
+
+Run tests using `pytest`:
+
+```bash
+pytest
+```

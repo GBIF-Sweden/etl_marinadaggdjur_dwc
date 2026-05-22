@@ -1,0 +1,88 @@
+extract:
+  database_hostname: 193.10.57.103
+  database_name: tumlaredb
+  database_port: "3306"
+  charset: utf8mb3
+  batch_size: 100
+  sql_file: seal_observations.sql
+
+dtype_dict:
+  observation_date: datetime64[ns]
+  seal_type: str
+  latitude: str
+  longitude: str
+  quantity: Int64
+  length: str
+  county: str
+  animal_decomposition_state: str
+  updated_at: datetime64[ns]
+
+mapping:
+  id: catalogNumber
+  observation_date: eventDate
+  seal_type: vernacularName
+  latitude: decimalLatitude
+  longitude: decimalLongitude
+  quantity: individualCount
+  updated_at: modified
+
+defaults:
+  institutionCode: NRM
+  collectionCode: Seals
+  basisOfRecord: HumanObservation
+  kingdom: Animalia
+  phylum: Chordata
+  class: Mammalia
+  orderr: Carnivora
+  family: Phocidae
+  country: Sweden
+  informationWithheld: "Observer's information withheld"
+
+columns_to_dynamicproperties:
+  - animal_decomposition_state
+  - length
+
+unmapped:
+  - animal_decomposition_state
+  - length
+
+vernacular_to_scientificName:
+  gråsäl:
+    scientificName: "Halichoerus grypus (Fabricius, 1791)"
+    taxonRank: species
+  vikare:
+    scientificName: "Pusa hispida (Schreber, 1775)"
+    taxonRank: species
+  knubbsäl:
+    scientificName: "Phoca vitulina Linnaeus, 1758"
+    taxonRank: species
+  okänd:
+    scientificName: Phocidae
+    taxonRank: family
+
+transformations:
+  - function: clean_whitespace
+    params: {}
+  - function: addprefix_associatedmedia
+    params:
+      url: https://marinadaggdjur.nrm.se/images/
+  - function: generate_occ_id_triplet
+    params: {}
+  - function: vernacular_to_scientificName
+    params: {}
+  - function: add_dynamicProperties
+    params: {}
+  - function: drop_unmapped_columns
+    params: {}
+
+load:
+  database_hostname: localhost
+  database_name: nrm_na_maf
+  database_port: "3306"
+  database_table: simpledwc_seals
+  database_table_pk_column: occurrenceID
+  targetFilePath: data/output_seals.csv
+  delimiter: "\t"
+  encoding: utf8
+  write_to_file: true
+  write_to_db: true
