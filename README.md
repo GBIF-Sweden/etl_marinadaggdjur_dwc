@@ -11,6 +11,8 @@ This repository provides a framework for extracting data from source databases, 
 
 ## Setup
 
+### Native Python
+
 Use a Python 3.12+ environment and install dependencies:
 
 ```bash
@@ -24,20 +26,44 @@ To install development dependencies:
 python -m pip install -r requirements-dev.txt
 ```
 
+### Docker
+
+Build the Docker image:
+
+```bash
+docker build -t etl_marinadaggdjur_dwc .
+```
+
 ## Running the ETL
 
 The ETL is driven by YAML configuration files found in `etl_configs/`.
 
+### Option 1: Native Execution (Python)
+
 ```bash
-python -m tumlaretogbif.main etl_configs/tumlare.yml --env-file .env
+python -m marinadaggdjur.main etl_configs/tumlare.yml --env-file .env
+```
+
+### Option 2: Docker Execution
+
+#### Using Docker Run
+Ensure you have a `.env` file with the necessary credentials.
+
+```bash
+docker run --env-file .env -v $(pwd)/data:/app/data etl_marinadaggdjur_dwc python -m marinadaggdjur.main etl_configs/tumlare.yml
+```
+
+#### Using Docker Compose
+Update the `env_file` path in `docker-compose.yml` if necessary, then run:
+
+```bash
+docker compose up
 ```
 
 ### Arguments
 
 - `config_path`: Path to the ETL configuration YAML (e.g., `etl_configs/tumlare.yml`).
 - `--env-file`: Optional path to a `.env` file containing database credentials (`SOURCE_DB_*` and `TARGET_DB_*`).
-- `--source-db-credentials-path`: Optional path to a JSON file with source database credentials.
-- `--target-db-credentials-path`: Optional path to a JSON file with target database credentials.
 
 ## Validation
 
