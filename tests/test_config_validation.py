@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from tumlaretogbif.config.config_loader import (
+from marinadaggdjur.config.config_loader import (
     load_config_file,
     load_db_credentials,
     load_env_file,
@@ -24,7 +24,7 @@ def test_load_db_credentials_from_environment(monkeypatch):
     monkeypatch.setenv("SOURCE_DB_USER", "user")
     monkeypatch.setenv("SOURCE_DB_PASSWORD", "password")
 
-    credentials = load_db_credentials(env_prefix="SOURCE")
+    credentials = load_db_credentials("SOURCE")
 
     assert credentials == {
         "database_user": "user",
@@ -36,8 +36,8 @@ def test_load_db_credentials_raises_for_missing_env(monkeypatch):
     monkeypatch.delenv("SOURCE_DB_USER", raising=False)
     monkeypatch.delenv("SOURCE_DB_PASSWORD", raising=False)
 
-    with pytest.raises(ValueError):
-        load_db_credentials(env_prefix="SOURCE")
+    with pytest.raises(ValueError, match="Missing database credentials for SOURCE"):
+        load_db_credentials("SOURCE")
 
 
 def test_load_env_file_sets_missing_values(tmp_path, monkeypatch):

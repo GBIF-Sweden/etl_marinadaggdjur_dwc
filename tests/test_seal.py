@@ -3,8 +3,8 @@ import json
 import pandas as pd
 import yaml
 
-from tumlaretogbif.config.config_loader import load_config_file, validate_etl_config
-from tumlaretogbif.transformation.transform import apply_transformations
+from marinadaggdjur.config.config_loader import load_config_file, validate_etl_config
+from marinadaggdjur.transformation.transform import apply_transformations
 
 
 def test_seal_config_loads_and_validates():

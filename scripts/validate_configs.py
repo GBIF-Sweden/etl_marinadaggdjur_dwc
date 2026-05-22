@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from tumlaretogbif.config.config_loader import load_config_file, validate_etl_config
+from marinadaggdjur.config.config_loader import load_config_file, validate_etl_config
 
 
 def main():
@@ -15,6 +15,9 @@ def main():
         config = load_config_file(config_path)
         validate_etl_config(config)
         sql_path = Path(config["extract"]["sql_file"])
+        if not sql_path.is_absolute():
+            sql_path = config_path.parent / sql_path
+
         if not sql_path.exists():
             raise FileNotFoundError(f"SQL file not found for {config_path}: {sql_path}")
 

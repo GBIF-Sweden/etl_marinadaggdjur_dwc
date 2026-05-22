@@ -4,10 +4,10 @@ import pandas as pd
 import yaml
 from sqlalchemy.engine import URL
 
-from tumlaretogbif import etl_runner
-from tumlaretogbif.extraction.extract import create_connection
-from tumlaretogbif.loading.load import execute_batch_with_retry
-from tumlaretogbif.transformation.transform import apply_transformations
+from marinadaggdjur import etl_runner
+from marinadaggdjur.extraction.extract import create_connection
+from marinadaggdjur.loading.load import execute_batch_with_retry
+from marinadaggdjur.transformation.transform import apply_transformations
 
 
 def test_tumlare_transformation_smoke_path():
@@ -308,7 +308,7 @@ def test_create_connection_uses_sqlalchemy_url(monkeypatch):
         captured["url"] = url
         return object()
 
-    monkeypatch.setattr("tumlaretogbif.extraction.extract.create_engine", fake_create_engine)
+    monkeypatch.setattr("marinadaggdjur.extraction.extract.create_engine", fake_create_engine)
 
     create_connection(
         {"database_user": "user", "database_password": "p@ss:word"},
