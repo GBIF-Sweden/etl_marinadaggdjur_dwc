@@ -5,15 +5,15 @@ import time
 import uuid
 from pathlib import Path
 
-from tumlaretogbif.config.config_loader import (
+from marinadaggdjur.config.config_loader import (
     load_config_file,
     load_db_credentials,
     load_env_file,
     validate_etl_config,
 )
-from tumlaretogbif.extraction.extract import create_connection, fetch_data_in_chunks
-from tumlaretogbif.loading.load import upsert_dataframe_in_batches
-from tumlaretogbif.transformation.transform import apply_transformations
+from marinadaggdjur.extraction.extract import create_connection, fetch_data_in_chunks
+from marinadaggdjur.loading.load import upsert_dataframe_in_batches
+from marinadaggdjur.transformation.transform import apply_transformations
 
 
 def write_dataframe_to_csv(df, load_config, file_written):
@@ -50,8 +50,6 @@ def log_run_summary(summary, level=logging.INFO):
 
 def run_etl(
     config_path,
-    source_db_credentials_path=None,
-    target_db_credentials_path=None,
     env_file_path=None,
 ):
     started_at = time.monotonic()
@@ -79,17 +77,15 @@ def run_etl(
             load_env_file(env_file_path)
 
         logging.info(
-            "ETL run started: config_path=%s source_credentials_mode=%s target_credentials_mode=%s",
+            "ETL run started: config_path=%s",
             str(config_file_path),
-            "file" if source_db_credentials_path else "env",
-            "file" if target_db_credentials_path else "env",
             extra={"run_id": run_id, "config_name": config_name},
         )
 
         config = load_config_file(config_file_path)
         validate_etl_config(config)
-        source_db_credentials = load_db_credentials(source_db_credentials_path, "SOURCE")
-        target_db_credentials = load_db_credentials(target_db_credentials_path, "TARGET")
+        source_db_credentials = load_db_credentials("SOURCE")
+        target_db_credentials = load_db_credentials("TARGET")
 
         extract_config = config["extract"]
         select_query = load_select_query(config_file_path, extract_config)

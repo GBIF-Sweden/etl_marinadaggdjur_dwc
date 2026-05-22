@@ -6,15 +6,12 @@ from pathlib import Path
 
 import yaml
 
-from tumlaretogbif.transformation.transform import get_registered_transformations
+from marinadaggdjur.transformation.transform import get_registered_transformations
 
 
-def load_db_credentials(config_path=None, env_prefix=None):
-    if config_path:
-        return load_config_file(config_path)
-
+def load_db_credentials(env_prefix):
     if not env_prefix:
-        raise ValueError("env_prefix is required when config_path is not provided.")
+        raise ValueError("env_prefix is required.")
 
     user = os.getenv(f"{env_prefix}_DB_USER")
     password = os.getenv(f"{env_prefix}_DB_PASSWORD")
@@ -29,7 +26,7 @@ def load_db_credentials(config_path=None, env_prefix=None):
     ]
     if missing:
         raise ValueError(
-            "Missing database credentials. Provide a credentials JSON file or set env vars: "
+            f"Missing database credentials for {env_prefix}. Set env vars: "
             + ", ".join(missing)
         )
 
@@ -119,7 +116,3 @@ def load_config_file(config_path):
     except json.JSONDecodeError:
         logging.exception("Error: Failed to decode JSON from the configuration file.")
         raise
-
-
-def load_json_config(config_path):
-    return load_config_file(config_path)
