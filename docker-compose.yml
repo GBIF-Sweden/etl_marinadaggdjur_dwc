@@ -3,8 +3,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: etl_marinadaggdjur_dwc:latest
     env_file:
-      - .secrets/local.env
+      - ./.env
     volumes:
       - ./data:/app/data
-    command: ["python", "-m", "tumlaretogbif.main", "etl_configs/tumlare.yml"]
+    command: ["python", "-m", "marinadaggdjur.main", "etl_configs/tumlare.yml"]

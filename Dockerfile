@@ -14,4 +14,4 @@ COPY etl_configs ./etl_configs
 
 RUN mkdir -p /app/data
 
-CMD ["python", "-m", "tumlaretogbif.main", "etl_configs/tumlare.yml"]
+CMD ["python", "-m", "marinadaggdjur.main", "etl_configs/tumlare.yml"]
