@@ -72,6 +72,10 @@ jobs:
           tags: |
             # Version tag from git tag refs, e.g. refs/tags/v0.1.0 -> v0.1.0
             type=ref,event=tag
+            # Branch tag from branch refs, e.g. refs/heads/master -> master
+            type=ref,event=branch
+            # Immutable tag per commit, e.g. sha-860c190
+            type=sha,prefix=sha-
             # Keep latest on default-branch builds
             type=raw,value=latest,enable={{is_default_branch}}
             # Also keep latest aligned with release tags (v*)
