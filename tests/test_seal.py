@@ -1,7 +1,6 @@
 import json
 
 import pandas as pd
-import yaml
 
 from marinadaggdjur.config.config_loader import load_config_file, validate_etl_config
 from marinadaggdjur.transformation.transform import apply_transformations
