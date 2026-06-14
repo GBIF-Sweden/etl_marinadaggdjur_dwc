@@ -78,6 +78,53 @@ def test_validate_etl_config_rejects_unknown_transformations():
         validate_etl_config(config)
 
 
+def test_validate_etl_config_rejects_invalid_batch_size():
+    config = {
+        "extract": {
+            "database_hostname": "source-db",
+            "database_name": "source",
+            "database_port": "3306",
+            "sql_file": "query.sql",
+            "batch_size": 0,
+        },
+        "mapping": {},
+        "defaults": {},
+        "transformations": [],
+        "load": {
+            "database_hostname": "target-db",
+            "database_name": "target",
+            "database_port": "3306",
+            "database_table": "table_name",
+        },
+    }
+
+    with pytest.raises(ValueError, match="greater than zero"):
+        validate_etl_config(config)
+
+
+def test_validate_etl_config_rejects_non_mapping_transform_params():
+    config = {
+        "extract": {
+            "database_hostname": "source-db",
+            "database_name": "source",
+            "database_port": "3306",
+            "sql_file": "query.sql",
+        },
+        "mapping": {},
+        "defaults": {},
+        "transformations": [{"function": "clean_whitespace", "params": []}],
+        "load": {
+            "database_hostname": "target-db",
+            "database_name": "target",
+            "database_port": "3306",
+            "database_table": "table_name",
+        },
+    }
+
+    with pytest.raises(ValueError, match="params must be a mapping"):
+        validate_etl_config(config)
+
+
 def test_load_config_file_normalizes_legacy_output_path(tmp_path):
     config_path = tmp_path / "config.yml"
     config_path.write_text(

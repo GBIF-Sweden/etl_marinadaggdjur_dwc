@@ -1,12 +1,68 @@
 import json
 import logging
 import os
+from collections.abc import Mapping
 from copy import deepcopy
 from pathlib import Path
 
 import yaml
 
 from marinadaggdjur.transformation.transform import get_registered_transformations
+
+REQUIRED_TOP_LEVEL_KEYS = ("extract", "mapping", "defaults", "transformations", "load")
+REQUIRED_EXTRACT_KEYS = ("database_hostname", "database_name", "database_port", "sql_file")
+REQUIRED_LOAD_KEYS = ("database_hostname", "database_name", "database_port", "database_table")
+
+
+def _require_mapping(value, label):
+    if not isinstance(value, Mapping):
+        raise ValueError(f"Configuration section '{label}' must be a mapping.")
+    return value
+
+
+def _require_string(value, label):
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"Configuration value '{label}' must be a non-empty string.")
+
+
+def _require_int_like(value, label):
+    try:
+        int(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"Configuration value '{label}' must be an integer.") from exc
+
+
+def _require_positive_int(value, label):
+    _require_int_like(value, label)
+    if int(value) <= 0:
+        raise ValueError(f"Configuration value '{label}' must be greater than zero.")
+
+
+def _validate_transformations(transformations):
+    if not isinstance(transformations, list):
+        raise ValueError("Configuration key 'transformations' must be a list.")
+
+    registered_transformations = get_registered_transformations()
+    unknown_transformations = []
+    for index, transformation in enumerate(transformations):
+        if not isinstance(transformation, Mapping):
+            raise ValueError(f"Transformation at index {index} must be a mapping.")
+
+        func_name = transformation.get("function")
+        if not isinstance(func_name, str) or not func_name.strip():
+            raise ValueError(f"Transformation at index {index} must define a function name.")
+
+        params = transformation.get("params", {})
+        if not isinstance(params, Mapping):
+            raise ValueError(f"Transformation '{func_name}' params must be a mapping.")
+
+        if func_name not in registered_transformations:
+            unknown_transformations.append(func_name)
+
+    if unknown_transformations:
+        raise ValueError(
+            "Configuration contains unknown transformations: " + ", ".join(sorted(unknown_transformations))
+        )
 
 
 def load_db_credentials(env_prefix):
@@ -52,36 +108,75 @@ def load_env_file(env_file_path):
 
 
 def validate_etl_config(config):
-    required_top_level_keys = ["extract", "mapping", "defaults", "transformations", "load"]
-    missing_keys = [key for key in required_top_level_keys if key not in config]
+    _require_mapping(config, "root")
+
+    missing_keys = [key for key in REQUIRED_TOP_LEVEL_KEYS if key not in config]
     if missing_keys:
         raise ValueError(f"Configuration is missing required keys: {', '.join(missing_keys)}")
 
-    extract_required_keys = ["database_hostname", "database_name", "database_port", "sql_file"]
-    load_required_keys = ["database_hostname", "database_name", "database_port", "database_table"]
+    extract_config = _require_mapping(config["extract"], "extract")
+    load_config = _require_mapping(config["load"], "load")
+    mapping_config = _require_mapping(config["mapping"], "mapping")
+    defaults_config = _require_mapping(config["defaults"], "defaults")
 
-    missing_extract_keys = [key for key in extract_required_keys if key not in config["extract"]]
+    missing_extract_keys = [key for key in REQUIRED_EXTRACT_KEYS if key not in extract_config]
     if missing_extract_keys:
         raise ValueError(f"Extract config is missing required keys: {', '.join(missing_extract_keys)}")
 
-    missing_load_keys = [key for key in load_required_keys if key not in config["load"]]
+    missing_load_keys = [key for key in REQUIRED_LOAD_KEYS if key not in load_config]
     if missing_load_keys:
         raise ValueError(f"Load config is missing required keys: {', '.join(missing_load_keys)}")
 
-    if not isinstance(config["transformations"], list):
-        raise ValueError("Configuration key 'transformations' must be a list.")
+    _require_string(extract_config["database_hostname"], "extract.database_hostname")
+    _require_string(extract_config["database_name"], "extract.database_name")
+    _require_string(extract_config["sql_file"], "extract.sql_file")
+    _require_int_like(extract_config["database_port"], "extract.database_port")
 
-    registered_transformations = get_registered_transformations()
-    unknown_transformations = sorted(
-        transformation.get("function")
-        for transformation in config["transformations"]
-        if transformation.get("function") not in registered_transformations
-    )
-    if unknown_transformations:
-        raise ValueError(
-            "Configuration contains unknown transformations: "
-            + ", ".join(unknown_transformations)
+    _require_string(load_config["database_hostname"], "load.database_hostname")
+    _require_string(load_config["database_name"], "load.database_name")
+    _require_string(load_config["database_table"], "load.database_table")
+    _require_int_like(load_config["database_port"], "load.database_port")
+
+    if "batch_size" in extract_config:
+        _require_positive_int(extract_config["batch_size"], "extract.batch_size")
+    if "batch_size" in load_config:
+        _require_positive_int(load_config["batch_size"], "load.batch_size")
+
+    if not isinstance(mapping_config, Mapping):
+        raise ValueError("Configuration key 'mapping' must be a mapping.")
+    if not isinstance(defaults_config, Mapping):
+        raise ValueError("Configuration key 'defaults' must be a mapping.")
+
+    if "columns_to_dynamicproperties" in config and not isinstance(
+        config["columns_to_dynamicproperties"], list
+    ):
+        raise ValueError("Configuration key 'columns_to_dynamicproperties' must be a list.")
+    if "columns_to_dynamicproperties" in config:
+        for index, column_name in enumerate(config["columns_to_dynamicproperties"]):
+            if not isinstance(column_name, str) or not column_name.strip():
+                raise ValueError(
+                    f"Configuration value 'columns_to_dynamicproperties[{index}]' must be a non-empty string."
+                )
+
+    if "vernacular_to_scientificName" in config:
+        vernacular_map = _require_mapping(
+            config["vernacular_to_scientificName"], "vernacular_to_scientificName"
         )
+        for vernacular, species_info in vernacular_map.items():
+            _require_mapping(species_info, f"vernacular_to_scientificName.{vernacular}")
+            if "scientificName" not in species_info or "taxonRank" not in species_info:
+                raise ValueError(
+                    "Each vernacular_to_scientificName entry must define scientificName and taxonRank."
+                )
+            _require_string(
+                species_info["scientificName"],
+                f"vernacular_to_scientificName.{vernacular}.scientificName",
+            )
+            _require_string(
+                species_info["taxonRank"], f"vernacular_to_scientificName.{vernacular}.taxonRank"
+            )
+
+    _validate_transformations(config["transformations"])
 
 
 def normalize_config_deprecations(config):
