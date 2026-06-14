@@ -6,6 +6,7 @@ from sqlalchemy.engine import URL
 
 from marinadaggdjur import etl_runner
 from marinadaggdjur.extraction.extract import create_connection
+from marinadaggdjur.loading import load as load_module
 from marinadaggdjur.loading.load import execute_batch_with_retry
 from marinadaggdjur.transformation.transform import apply_transformations
 
@@ -217,6 +218,38 @@ def test_execute_batch_with_retry_retries_and_commits():
     )
 
     assert events == ["execute-1", "rollback", "execute-2", "commit"]
+
+
+def test_execute_batch_with_retry_uses_exponential_backoff(monkeypatch):
+    sleeps = []
+
+    class DummySession:
+        def __init__(self):
+            self.attempts = 0
+
+        def execute(self, _stmt):
+            self.attempts += 1
+            if self.attempts < 3:
+                raise RuntimeError("temporary failure")
+
+        def commit(self):
+            return None
+
+        def rollback(self):
+            return None
+
+    monkeypatch.setattr(load_module.random, "uniform", lambda _a, _b: 0)
+    monkeypatch.setattr(load_module.time, "sleep", lambda seconds: sleeps.append(seconds))
+
+    execute_batch_with_retry(
+        DummySession(),
+        stmt=object(),
+        batch_number=1,
+        max_retries=3,
+        retry_delay_seconds=1,
+    )
+
+    assert sleeps == [1, 2]
 
 
 def test_run_etl_resolves_sql_path_relative_to_config(tmp_path, monkeypatch):
