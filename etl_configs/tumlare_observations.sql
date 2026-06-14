@@ -14,7 +14,6 @@ SELECT
     quantity_cubs_max,
     quantity_dead,
     dead_length_min,
-    dead_length_max,
     observer_comment,
     observations.updated_at,
     counties.name,

@@ -50,7 +50,6 @@ columns_to_dynamicproperties:
   - quantity_cubs_max
   - quantity_dead
   - dead_length_min
-  - dead_length_max
 
 unmapped:
   - animal_condition
