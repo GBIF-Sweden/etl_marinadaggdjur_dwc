@@ -211,10 +211,10 @@ def addprefix_associatedmedia(df, url):
     def fix_value(value):
         if pd.isna(value) or value == '':
             return value
-        else:
-            elements = value.split(',')
-            fixed_elements = [f"{url}{element}" for element in elements]
-            return ' | '.join(fixed_elements)
+
+        elements = [element.strip() for element in str(value).split(",") if element.strip()]
+        fixed_elements = [f"{url}{element}" for element in elements]
+        return " | ".join(fixed_elements)
 
     try:
         df['associatedMedia'] = df['associatedMedia'].apply(fix_value)
@@ -352,7 +352,10 @@ def apply_transformations(df, config):
 
         # Fill default values
         for col, default_value in config.get('defaults', {}).items():
-            df[col] = df.get(col, default_value)
+            if col in df.columns:
+                df[col] = df[col].fillna(default_value)
+            else:
+                df[col] = default_value
 
         # Apply transformations
         transformations = config.get('transformations', [])
