@@ -1,7 +1,13 @@
 import json
+from datetime import date, datetime, time as datetime_time
+from decimal import Decimal
+
+import numpy as np
+import pytest
 
 import pandas as pd
 import yaml
+from sqlalchemy import Boolean, Column, Date, DateTime, Float, Integer, JSON, MetaData, Numeric, String, Table, Time
 from sqlalchemy.engine import URL
 
 from marinadaggdjur import etl_runner
@@ -218,6 +224,92 @@ def test_execute_batch_with_retry_retries_and_commits():
     )
 
     assert events == ["execute-1", "rollback", "execute-2", "commit"]
+
+
+def test_batch_records_for_mysql_replaces_missing_values_with_none():
+    df = pd.DataFrame(
+        [
+            {
+                "float_value": float("nan"),
+                "int_value": pd.NA,
+                "text_value": "ok",
+            }
+        ]
+    )
+
+    records = load_module._batch_records_for_mysql(df)
+
+    assert records == [
+        {
+            "float_value": None,
+            "int_value": None,
+            "text_value": "ok",
+        }
+    ]
+
+
+def test_prepare_batch_records_for_mysql_coerces_schema_specific_values():
+    table = Table(
+        "target_table",
+        MetaData(),
+        Column("id", Integer, primary_key=True),
+        Column("amount", Numeric(10, 2)),
+        Column("ratio", Float()),
+        Column("active", Boolean()),
+        Column("created_at", DateTime()),
+        Column("event_date", Date()),
+        Column("event_time", Time()),
+        Column("payload", JSON()),
+        Column("description", String()),
+        Column("optional_int", Integer()),
+    )
+    df = pd.DataFrame(
+        [
+            {
+                "id": np.int64(7),
+                "amount": np.float64(12.5),
+                "ratio": "3.25",
+                "active": "yes",
+                "created_at": "2024-01-02T03:04:05Z",
+                "event_date": "2024-01-02",
+                "event_time": "01:02:03",
+                "payload": {"source": "etl"},
+                "description": datetime(2024, 1, 2, 3, 4, 5),
+                "optional_int": pd.NA,
+            }
+        ]
+    )
+
+    records = load_module._prepare_batch_records_for_mysql(table, df)
+
+    assert records == [
+        {
+            "id": 7,
+            "amount": Decimal("12.5"),
+            "ratio": 3.25,
+            "active": True,
+            "created_at": datetime(2024, 1, 2, 3, 4, 5),
+            "event_date": date(2024, 1, 2),
+            "event_time": datetime_time(1, 2, 3),
+            "payload": {"source": "etl"},
+            "description": datetime(2024, 1, 2, 3, 4, 5).isoformat(),
+            "optional_int": None,
+        }
+    ]
+
+
+def test_validate_primary_key_rejects_duplicates():
+    df = pd.DataFrame([{"id": 1}, {"id": 1}])
+
+    with pytest.raises(ValueError, match="duplicate values"):
+        load_module._validate_primary_key(df, "id", "target_table")
+
+
+def test_validate_primary_key_rejects_missing_values():
+    df = pd.DataFrame([{"id": 1}, {"id": None}])
+
+    with pytest.raises(ValueError, match="missing values"):
+        load_module._validate_primary_key(df, "id", "target_table")
 
 
 def test_execute_batch_with_retry_uses_exponential_backoff(monkeypatch):
