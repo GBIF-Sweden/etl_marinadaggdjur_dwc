@@ -2,7 +2,8 @@ import logging
 import math
 import random
 import time
-from datetime import date, datetime, time as datetime_time, timezone
+from datetime import date, datetime, timezone
+from datetime import time as datetime_time
 from decimal import Decimal
 
 import numpy as np
@@ -11,7 +12,17 @@ from sqlalchemy import MetaData, Table, create_engine
 from sqlalchemy.dialects.mysql import insert
 from sqlalchemy.engine import URL
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.sql.sqltypes import Boolean, Date, DateTime, Float, Integer, JSON, Numeric, String, Time
+from sqlalchemy.sql.sqltypes import (
+    JSON,
+    Boolean,
+    Date,
+    DateTime,
+    Float,
+    Integer,
+    Numeric,
+    String,
+    Time,
+)
 
 
 def _is_missing_value(value):

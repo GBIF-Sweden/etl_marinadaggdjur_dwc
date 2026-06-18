@@ -1,13 +1,26 @@
 import json
-from datetime import date, datetime, time as datetime_time
+from datetime import date, datetime
+from datetime import time as datetime_time
 from decimal import Decimal
 
 import numpy as np
-import pytest
-
 import pandas as pd
+import pytest
 import yaml
-from sqlalchemy import Boolean, Column, Date, DateTime, Float, Integer, JSON, MetaData, Numeric, String, Table, Time
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Column,
+    Date,
+    DateTime,
+    Float,
+    Integer,
+    MetaData,
+    Numeric,
+    String,
+    Table,
+    Time,
+)
 from sqlalchemy.engine import URL
 
 from marinadaggdjur import etl_runner
